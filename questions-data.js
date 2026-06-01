@@ -1,0 +1,387 @@
+const QUESTIONS = [
+  {
+    "id": "1.1",
+    "title": "Basic Variable Hoisting",
+    "category": "HOISTING",
+    "type": "output",
+    "code": "console.log(a);\nvar a = 5;\nconsole.log(a);",
+    "expectedOutput": "undefined\n5",
+    "explanation": "- JavaScript hoisting moves variable declarations to the top of their scope before code execution\n- `var a` is hoisted but not initialized, so it becomes `undefined`\n- This is equivalent to: `var a; console.log(a); a = 5; console.log(a);`",
+    "keyConcepts": "- Hoisting moves declarations, not assignments\n- `var` is hoisted with initial value `undefined`\n- Function declarations are completely hoisted (both declaration and definition)"
+  },
+  {
+    "id": "1.2",
+    "title": "Function Hoisting",
+    "category": "HOISTING",
+    "type": "output",
+    "code": "console.log(add(2, 3));\n\nfunction add(a, b) {\n    return a + b;\n}",
+    "expectedOutput": "5",
+    "explanation": "- Function declarations are completely hoisted (both the declaration and the body)\n- The entire function is moved to the top of its scope\n- You can call the function before declaring it",
+    "keyConcepts": "- Function declarations are fully hoisted\n- Function expressions are NOT hoisted\n- This is why `var functionName = function() {}` would give error if called before declaration"
+  },
+  {
+    "id": "1.3",
+    "title": "Hoisting with Function Expression",
+    "category": "HOISTING",
+    "type": "output",
+    "code": "console.log(greet());\n\nvar greet = function() {\n    return \"Hello\";\n};",
+    "expectedOutput": "TypeError: greet is not a function",
+    "explanation": "- `var greet` is hoisted but initialized as `undefined`\n- When we try to call `greet()`, it's trying to invoke `undefined` as a function\n- Function expressions are treated as variable assignments, not function declarations"
+  },
+  {
+    "id": "1.4",
+    "title": "Hoisting in IIFE",
+    "category": "HOISTING",
+    "type": "output",
+    "code": "var x = 10;\n(function() {\n    console.log(x);\n    var x = 20;\n})();",
+    "expectedOutput": "undefined",
+    "explanation": "- Even though `var x = 20` is inside the IIFE, the variable declaration is hoisted to the top of the function\n- The outer `x = 10` is not accessible due to the inner `var x` declaration\n- When `console.log(x)` executes, `x` is declared but not yet initialized (TDZ concept)"
+  },
+  {
+    "id": "2.1",
+    "title": "Global and Local Scope",
+    "category": "SCOPE & SCOPE CHAIN",
+    "type": "output",
+    "code": "var global = \"I'm global\";\n\nfunction outer() {\n    var local = \"I'm local\";\n    console.log(global);\n    console.log(local);\n}\n\nouter();\nconsole.log(local); // Error?",
+    "expectedOutput": "I'm global\nI'm local\nReferenceError: local is not defined",
+    "explanation": "- Global variables are accessible everywhere\n- Local variables are only accessible within their function scope\n- Trying to access a local variable outside its scope throws a ReferenceError"
+  },
+  {
+    "id": "2.2",
+    "title": "Scope Chain",
+    "category": "SCOPE & SCOPE CHAIN",
+    "type": "output",
+    "code": "var a = 1;\n\nfunction outer() {\n    var b = 2;\n    \n    function inner() {\n        var c = 3;\n        console.log(a, b, c);\n    }\n    \n    inner();\n}\n\nouter();",
+    "expectedOutput": "1 2 3",
+    "explanation": "- Scope chain allows inner functions to access variables from outer scopes\n- When a variable is not found in the current scope, JavaScript looks in the parent scope\n- The chain continues until the global scope is reached\n- Order: local scope → outer function scope → global scope",
+    "keyConcepts": "- Scope chain is one-directional (inner can access outer, but not vice versa)\n- This forms the basis of closures"
+  },
+  {
+    "id": "2.3",
+    "title": "Scope Shadowing",
+    "category": "SCOPE & SCOPE CHAIN",
+    "type": "output",
+    "code": "var x = 5;\n\nfunction test() {\n    var x = 10;\n    console.log(x);\n    \n    function inner() {\n        var x = 15;\n        console.log(x);\n    }\n    \n    inner();\n    console.log(x);\n}\n\ntest();\nconsole.log(x);",
+    "expectedOutput": "10\n15\n10\n5",
+    "explanation": "- When an inner scope declares a variable with the same name as an outer scope, it shadows the outer variable\n- Each `console.log(x)` refers to the `x` in its respective scope"
+  },
+  {
+    "id": "3.1",
+    "title": "var vs let vs const - Block Scope",
+    "category": "let/const/var & TEMPORAL DEAD ZONE",
+    "type": "output",
+    "code": "for (var i = 0; i < 3; i++) {\n    console.log(i);\n}\nconsole.log(i); // Can we access i?\n\nfor (let j = 0; j < 3; j++) {\n    console.log(j);\n}\nconsole.log(j); // Can we access j?",
+    "expectedOutput": "0\n1\n2\n3\nReferenceError: j is not defined",
+    "explanation": "- `var` is function-scoped, so it's accessible outside the loop\n- `let` and `const` are block-scoped (limited to the `{}` block)\n- The loop variable `i` leaks to the outer scope with `var`, but `j` doesn't with `let`"
+  },
+  {
+    "id": "3.2",
+    "title": "Temporal Dead Zone (TDZ)",
+    "category": "let/const/var & TEMPORAL DEAD ZONE",
+    "type": "output",
+    "code": "console.log(x); // ReferenceError or undefined?\nlet x = 5;",
+    "expectedOutput": "ReferenceError: Cannot access 'x' before initialization",
+    "explanation": "- `let` and `const` are hoisted but NOT initialized\n- There's a \"Temporal Dead Zone\" from the start of the block until the declaration is processed\n- Accessing a variable in the TDZ throws a ReferenceError\n- This is different from `var`, which is initialized as `undefined`",
+    "keyConcepts": "- TDZ = Time between entering scope and variable declaration\n- Prevents common bugs and enforces better practices"
+  },
+  {
+    "id": "3.3",
+    "title": "const and Reassignment",
+    "category": "let/const/var & TEMPORAL DEAD ZONE",
+    "type": "output",
+    "code": "const PI = 3.14;\nPI = 3.14159; // Error?\n\nconst obj = { name: \"John\" };\nobj.name = \"Jane\"; // Allowed?\nobj = {}; // Error?",
+    "expectedOutput": "TypeError: Assignment to constant variable (1st attempt)\n// obj.name = \"Jane\" works fine, logs: { name: \"Jane\" }\n// obj = {} throws TypeError",
+    "explanation": "- `const` prevents reassignment, not mutation\n- You cannot reassign a `const` variable to a new value\n- You CAN modify properties of objects/arrays declared with `const`\n- `const` must be initialized at declaration"
+  },
+  {
+    "id": "3.4",
+    "title": "TDZ with Conditional",
+    "category": "let/const/var & TEMPORAL DEAD ZONE",
+    "type": "output",
+    "code": "var x = 5;\n\nif (true) {\n    console.log(x); // What happens?\n    let x = 10;\n}",
+    "expectedOutput": "ReferenceError: Cannot access 'x' before initialization",
+    "explanation": "- Even though there's a global `x = 5`, the local `let x = 10` creates a TDZ\n- The entire block `{}` is the TDZ for the local `x`\n- The outer `x` is shadowed and inaccessible in the block"
+  },
+  {
+    "id": "4.1",
+    "title": "Lexical Environment Basics",
+    "category": "LEXICAL ENVIRONMENT",
+    "type": "output",
+    "code": "var x = 10;\n\nfunction outer() {\n    var y = 20;\n    \n    function inner() {\n        var z = 30;\n        console.log(x, y, z);\n    }\n    \n    return inner;\n}\n\nconst fn = outer();\nfn();",
+    "expectedOutput": "10 20 30",
+    "explanation": "- Lexical Environment = current scope + reference to parent scope\n- `inner()` has access to:\n  - Its own scope (z = 30)\n  - outer's scope (y = 20)\n  - Global scope (x = 10)\n- This is determined by WHERE the function is defined, not WHERE it's called\n- This is why it's called \"Lexical\" scoping"
+  },
+  {
+    "id": "4.2",
+    "title": "Lexical vs Dynamic Scoping",
+    "category": "LEXICAL ENVIRONMENT",
+    "type": "output",
+    "code": "var a = \"global\";\n\nfunction first() {\n    var a = \"in first\";\n    second();\n}\n\nfunction second() {\n    console.log(a);\n}\n\nfirst();",
+    "expectedOutput": "global",
+    "explanation": "- JavaScript uses Lexical Scoping (also called Static Scoping)\n- `second()` looks for `a` in its lexical (definition) environment, not its call environment\n- Even though `second()` is called from `first()`, it doesn't have access to `first`'s `a`\n- It only accesses the global `a`",
+    "keyConcepts": "- Lexical scope is determined at write-time, not runtime\n- This is opposite to dynamic scoping (where you'd look at the call stack)"
+  },
+  {
+    "id": "5.1",
+    "title": "Basic Closure",
+    "category": "CLOSURES",
+    "type": "output",
+    "code": "function makeFunc() {\n    var name = \"John\";\n    \n    return function displayName() {\n        console.log(name);\n    };\n}\n\nconst myFunc = makeFunc();\nmyFunc();",
+    "expectedOutput": "John",
+    "explanation": "- A closure is a function that has access to variables from its outer function's scope\n- Even after `makeFunc()` has finished executing, `displayName()` still has access to `name`\n- The inner function \"remembers\" or \"closes over\" the outer variables"
+  },
+  {
+    "id": "5.2",
+    "title": "Closure with Loop Problem",
+    "category": "CLOSURES",
+    "type": "output",
+    "code": "for (var i = 0; i < 3; i++) {\n    setTimeout(function() {\n        console.log(i);\n    }, 1000);\n}",
+    "expectedOutput": "3\n3\n3\n(printed after 1 second, all three)",
+    "explanation": "- All three callbacks close over the SAME `i` variable\n- By the time the callbacks execute, the loop has finished and `i = 3`\n- This is a classic closure + setTimeout gotcha",
+    "howToFix": "```javascript\n// Solution 1: Use let (block scope)\nfor (let i = 0; i < 3; i++) {\n    setTimeout(function() {\n        console.log(i); // Prints: 0, 1, 2\n    }, 1000);\n}\n\n// Solution 2: IIFE to create new scope\nfor (var i = 0; i < 3; i++) {\n    (function(j) {\n        setTimeout(function() {\n            console.log(j); // Prints: 0, 1, 2\n        }, 1000);\n    })(i);\n}\n```"
+  },
+  {
+    "id": "5.3",
+    "title": "Counter using Closure",
+    "category": "CLOSURES",
+    "type": "output",
+    "code": "function counter() {\n    let count = 0;\n    \n    return {\n        increment: function() {\n            count++;\n            return count;\n        },\n        decrement: function() {\n            count--;\n            return count;\n        },\n        getCount: function() {\n            return count;\n        }\n    };\n}\n\nconst c = counter();\nconsole.log(c.increment()); // 1\nconsole.log(c.increment()); // 2\nconsole.log(c.decrement()); // 1\nconsole.log(c.getCount());  // 1",
+    "expectedOutput": "1\n2\n1\n1",
+    "explanation": "- The `count` variable is private and only accessible through the returned methods\n- Each method maintains a reference to the same `count` variable\n- This demonstrates data privacy using closures"
+  },
+  {
+    "id": "5.4",
+    "title": "Multiple Closures",
+    "category": "CLOSURES",
+    "type": "output",
+    "code": "function outer(x) {\n    return function(y) {\n        return x + y;\n    };\n}\n\nconst add5 = outer(5);\nconst add10 = outer(10);\n\nconsole.log(add5(3));  // 8\nconsole.log(add10(3)); // 13",
+    "expectedOutput": "8\n13",
+    "explanation": "- Each closure maintains its own independent lexical environment\n- `add5` and `add10` have different values of `x` (5 and 10 respectively)\n- Even though they're created by the same function, they don't share state"
+  },
+  {
+    "id": "6.1",
+    "title": "this in Regular Function",
+    "category": "THIS KEYWORD",
+    "type": "output",
+    "code": "function greet() {\n    console.log(this.name);\n}\n\nconst person = {\n    name: \"Alice\",\n    greet: greet\n};\n\nperson.greet(); // What is 'this'?\ngreet(); // What is 'this'?",
+    "expectedOutput": "Alice\nundefined (or error in strict mode)",
+    "explanation": "- When called as `person.greet()`, `this` refers to the `person` object\n- When called as `greet()`, `this` refers to the global object (or `undefined` in strict mode)\n- The value of `this` depends on HOW the function is called, not WHERE it's defined"
+  },
+  {
+    "id": "6.2",
+    "title": "this in Arrow Function",
+    "category": "THIS KEYWORD",
+    "type": "output",
+    "code": "const person = {\n    name: \"Bob\",\n    greet: function() {\n        console.log(this.name);\n        \n        const arrow = () => {\n            console.log(this.name);\n        };\n        \n        arrow();\n    }\n};\n\nperson.greet();",
+    "expectedOutput": "Bob\nBob",
+    "explanation": "- Arrow functions don't have their own `this`\n- They inherit `this` from their enclosing lexical context\n- The arrow function's `this` refers to the same `this` as the outer function"
+  },
+  {
+    "id": "6.3",
+    "title": "Implicit Binding",
+    "category": "THIS KEYWORD",
+    "type": "output",
+    "code": "const obj = {\n    x: 42,\n    getX: function() {\n        return this.x;\n    }\n};\n\nconsole.log(obj.getX()); // ?\n\nconst getX = obj.getX;\nconsole.log(getX()); // ?",
+    "expectedOutput": "42\nundefined",
+    "explanation": "- `obj.getX()` - `this` is bound to `obj` (implicit binding, because method is called on object)\n- `getX()` - `this` is bound to global object (or undefined in strict mode)\n- When you assign a method to a variable and call it, you lose the context"
+  },
+  {
+    "id": "6.4",
+    "title": "Explicit Binding with call, apply, bind",
+    "category": "THIS KEYWORD",
+    "type": "output",
+    "code": "function introduce(city, country) {\n    console.log(this.name + \" is from \" + city + \", \" + country);\n}\n\nconst person = { name: \"Charlie\" };\n\n// Using call\nintroduce.call(person, \"NYC\", \"USA\");\n\n// Using apply\nintroduce.apply(person, [\"NYC\", \"USA\"]);\n\n// Using bind\nconst boundIntroduce = introduce.bind(person, \"NYC\", \"USA\");\nboundIntroduce();",
+    "expectedOutput": "Charlie is from NYC, USA\nCharlie is from NYC, USA\nCharlie is from NYC, USA",
+    "explanation": "- `call()` - invokes immediately, arguments as comma-separated values\n- `apply()` - invokes immediately, arguments as array\n- `bind()` - returns a new function, doesn't invoke immediately"
+  },
+  {
+    "id": "6.5",
+    "title": "this in Callbacks",
+    "category": "THIS KEYWORD",
+    "type": "output",
+    "code": "var length = 4;\n\nfunction callback() {\n    console.log(this.length);\n}\n\nconst object = {\n    length: 5,\n    method: function(callback) {\n        callback();\n    }\n};\n\nobject.method(callback);",
+    "expectedOutput": "4",
+    "explanation": "- Even though `callback` is passed to an object's method, it's still called as a regular function\n- Regular function invocation means `this` refers to global object\n- `this.length` evaluates to `window.length` (which is 4, set by `var length = 4`)"
+  },
+  {
+    "id": "7.1",
+    "title": "Basic Event Loop",
+    "category": "EVENT LOOP & CALL STACK",
+    "type": "output",
+    "code": "console.log(\"Start\");\n\nsetTimeout(function() {\n    console.log(\"setTimeout\");\n}, 0);\n\nconsole.log(\"End\");",
+    "expectedOutput": "Start\nEnd\nsetTimeout",
+    "explanation": "- JavaScript is single-threaded and uses an event loop\n- The Call Stack executes synchronous code first\n- Even with 0ms delay, `setTimeout` callback goes to the macrotask queue\n- Event loop only processes the callback after the Call Stack is empty",
+    "keyConcepts": "- Call Stack: Executes synchronous code\n- Web APIs: Handle async operations (setTimeout, promises, etc.)\n- Event Queue: Holds callbacks ready to execute\n- Event Loop: Checks if Call Stack is empty, then moves callbacks from queue to stack"
+  },
+  {
+    "id": "7.2",
+    "title": "Microtask vs Macrotask",
+    "category": "EVENT LOOP & CALL STACK",
+    "type": "output",
+    "code": "console.log(\"Script start\");\n\nsetTimeout(() => {\n    console.log(\"setTimeout\");\n}, 0);\n\nPromise.resolve()\n    .then(() => {\n        console.log(\"Promise 1\");\n    })\n    .then(() => {\n        console.log(\"Promise 2\");\n    });\n\nconsole.log(\"Script end\");",
+    "expectedOutput": "Script start\nScript end\nPromise 1\nPromise 2\nsetTimeout",
+    "explanation": "- Synchronous code executes first (Script start, Script end)\n- Microtasks (Promises) execute before macrotasks (setTimeout)\n- All microtasks are processed before moving to the next macrotask"
+  },
+  {
+    "id": "7.3",
+    "title": "Complex Event Loop",
+    "category": "EVENT LOOP & CALL STACK",
+    "type": "output",
+    "code": "console.log(\"1\");\n\nsetTimeout(() => {\n    console.log(\"2\");\n}, 0);\n\nPromise.resolve()\n    .then(() => {\n        console.log(\"3\");\n        setTimeout(() => {\n            console.log(\"4\");\n        }, 0);\n    })\n    .then(() => {\n        console.log(\"5\");\n    });\n\nconsole.log(\"6\");",
+    "expectedOutput": "1\n6\n3\n5\n2\n4",
+    "explanation": "1. Synchronous: 1, 6\n2. Microtasks: Promise executes console.log(3) and registers setTimeout\n3. Microtasks: Second .then() executes console.log(5)\n4. Macrotask: First setTimeout console.log(2)\n5. Macrotask: Second setTimeout console.log(4)"
+  },
+  {
+    "id": "7.4",
+    "title": "Call Stack and Recursion",
+    "category": "EVENT LOOP & CALL STACK",
+    "type": "output",
+    "code": "function recursive(n) {\n    if (n === 0) return;\n    console.log(n);\n    recursive(n - 1);\n}\n\nrecursive(3);",
+    "expectedOutput": "3\n2\n1",
+    "explanation": "- Call Stack grows as functions are called\n- Each recursive call pushes a new frame onto the stack\n- When base case is reached, functions pop off the stack in reverse order\n- If recursion is too deep, you get \"Maximum call stack size exceeded\""
+  },
+  {
+    "id": "8.1",
+    "title": "setTimeout Basic Behavior",
+    "category": "SETTIMEOUT",
+    "type": "output",
+    "code": "console.log(\"Before\");\n\nsetTimeout(() => {\n    console.log(\"Inside setTimeout\");\n}, 1000);\n\nconsole.log(\"After\");",
+    "expectedOutput": "Before\nAfter\nInside setTimeout\n(1 second later)",
+    "explanation": "- `setTimeout` is asynchronous\n- The callback is not executed immediately\n- The delay is the minimum wait time (not exact)"
+  },
+  {
+    "id": "8.2",
+    "title": "setTimeout with 0 Delay",
+    "category": "SETTIMEOUT",
+    "type": "output",
+    "code": "console.log(\"Start\");\n\nsetTimeout(() => {\n    console.log(\"setTimeout with 0 delay\");\n}, 0);\n\nfor (let i = 0; i < 1000000; i++) {}\n\nconsole.log(\"End\");",
+    "expectedOutput": "Start\nEnd\nsetTimeout with 0 delay",
+    "explanation": "- Even 0ms delay means the callback goes to the event queue\n- The loop blocks the event loop, delaying the setTimeout callback\n- The minimum guaranteed delay is often 4-5ms in browsers"
+  },
+  {
+    "id": "8.3",
+    "title": "setTimeout Order with Multiple Timers",
+    "category": "SETTIMEOUT",
+    "type": "output",
+    "code": "setTimeout(() => console.log(\"A\"), 300);\nsetTimeout(() => console.log(\"B\"), 100);\nsetTimeout(() => console.log(\"C\"), 200);\nsetTimeout(() => console.log(\"D\"), 100);",
+    "expectedOutput": "B\nD\nC\nA",
+    "explanation": "- setTimeout callbacks are processed in order of their delay time\n- When two timers have the same delay (B and D - both 100ms), they execute in the order they were registered"
+  },
+  {
+    "id": "8.4",
+    "title": "setTimeout in Async Function",
+    "category": "SETTIMEOUT",
+    "type": "output",
+    "code": "async function test() {\n    console.log(\"1\");\n    \n    setTimeout(() => {\n        console.log(\"2\");\n    }, 0);\n    \n    await Promise.resolve();\n    \n    console.log(\"3\");\n}\n\ntest();\nconsole.log(\"4\");",
+    "expectedOutput": "1\n4\n3\n2",
+    "explanation": "1. `test()` calls, logs \"1\"\n2. setTimeout callback registered (macrotask queue)\n3. Function pauses at await\n4. Synchronous code continues, logs \"4\"\n5. Async function resumes, microtask (Promise) completes\n6. Logs \"3\"\n7. Event loop processes macrotask, logs \"2\""
+  },
+  {
+    "id": "9.1",
+    "title": "Execution Context Phases",
+    "category": "EXECUTION CONTEXT",
+    "type": "output",
+    "code": "console.log(x); // What is x here?\nconsole.log(add(2, 3)); // What happens?\n\nvar x = 5;\n\nfunction add(a, b) {\n    return a + b;\n}",
+    "expectedOutput": "undefined\n5",
+    "explanation": "- JavaScript execution happens in 3 phases:\n  1. **Creation Phase**: Variables/functions hoisted, `this` bound, scope chain set\n  2. **Execution Phase**: Code executed line by line\n  3. **Deletion Phase**: Variables/functions garbage collected (for function execution contexts)"
+  },
+  {
+    "id": "9.2",
+    "title": "Nested Execution Contexts",
+    "category": "EXECUTION CONTEXT",
+    "type": "output",
+    "code": "var global = \"global\";\n\nfunction outer() {\n    var outerVar = \"outer\";\n    \n    function inner() {\n        var innerVar = \"inner\";\n        console.log(global, outerVar, innerVar);\n    }\n    \n    inner();\n}\n\nouter();",
+    "expectedOutput": "global outer inner",
+    "explanation": "- Global Execution Context created first\n- `outer()` call creates a new execution context\n- `inner()` call creates another new execution context\n- Each context has its own scope chain to access variables"
+  },
+  {
+    "id": "9.3",
+    "title": "this in Different Contexts",
+    "category": "EXECUTION CONTEXT",
+    "type": "output",
+    "code": "var name = \"Global\";\n\nconst obj = {\n    name: \"Object\",\n    method() {\n        console.log(this.name);\n        \n        function regularFunc() {\n            console.log(this.name);\n        }\n        \n        const arrowFunc = () => {\n            console.log(this.name);\n        };\n        \n        regularFunc();\n        arrowFunc();\n    }\n};\n\nobj.method();",
+    "expectedOutput": "Object\nGlobal\nObject",
+    "explanation": "- `this` in `method()` = `obj` (implicit binding)\n- `this` in `regularFunc()` = global object (new execution context)\n- `this` in `arrowFunc()` = `obj` (inherits from method's context)"
+  },
+  {
+    "id": "10.1",
+    "title": "Functions as Values",
+    "category": "FIRST-CLASS FUNCTIONS & CALLBACKS",
+    "type": "output",
+    "code": "const greet = function(name) {\n    return \"Hello, \" + name;\n};\n\nfunction executeFunction(fn) {\n    return fn(\"World\");\n}\n\nconsole.log(executeFunction(greet));",
+    "expectedOutput": "Hello, World",
+    "explanation": "- Functions are first-class objects in JavaScript\n- They can be assigned to variables\n- They can be passed as arguments to other functions\n- They can be returned from functions"
+  },
+  {
+    "id": "10.2",
+    "title": "Higher-Order Functions",
+    "category": "FIRST-CLASS FUNCTIONS & CALLBACKS",
+    "type": "output",
+    "code": "function multiplier(factor) {\n    return function(number) {\n        return number * factor;\n    };\n}\n\nconst double = multiplier(2);\nconst triple = multiplier(3);\n\nconsole.log(double(5)); // 10\nconsole.log(triple(5)); // 15",
+    "expectedOutput": "10\n15",
+    "explanation": "- A higher-order function is a function that takes or returns another function\n- `multiplier()` returns a function that closes over `factor`\n- Each returned function maintains its own closure"
+  },
+  {
+    "id": "10.3",
+    "title": "Callback Function",
+    "category": "FIRST-CLASS FUNCTIONS & CALLBACKS",
+    "type": "output",
+    "code": "function fetchData(callback) {\n    setTimeout(() => {\n        const data = { id: 1, name: \"John\" };\n        callback(data);\n    }, 1000);\n}\n\nfetchData(function(data) {\n    console.log(\"Data received:\", data);\n});\n\nconsole.log(\"Fetching data...\");",
+    "expectedOutput": "Fetching data...\nData received: { id: 1, name: 'John' }\n(after 1 second)",
+    "explanation": "- A callback is a function passed as an argument to be executed later\n- Used commonly for asynchronous operations\n- The callback executes when the operation completes"
+  },
+  {
+    "id": "10.4",
+    "title": "Array Methods with Callbacks",
+    "category": "FIRST-CLASS FUNCTIONS & CALLBACKS",
+    "type": "output",
+    "code": "const numbers = [1, 2, 3, 4, 5];\n\nconst doubled = numbers.map(function(num) {\n    return num * 2;\n});\n\nconst evens = numbers.filter(function(num) {\n    return num % 2 === 0;\n});\n\nconsole.log(doubled); // [2, 4, 6, 8, 10]\nconsole.log(evens);   // [2, 4]",
+    "expectedOutput": "[2, 4, 6, 8, 10]\n[2, 4]",
+    "explanation": "- `map()` transforms each element using the callback\n- `filter()` selects elements where callback returns truthy\n- Both are examples of higher-order functions"
+  },
+  {
+    "id": "10.5",
+    "title": "Callback Hell / Pyramid of Doom",
+    "category": "FIRST-CLASS FUNCTIONS & CALLBACKS",
+    "type": "output",
+    "code": "// ❌ Callback Hell (Avoid this)\nfunction processData(callback) {\n    setTimeout(() => {\n        callback(\"Data 1\");\n    }, 1000);\n}\n\nprocessData(function(data1) {\n    console.log(data1);\n    processData(function(data2) {\n        console.log(data2);\n        processData(function(data3) {\n            console.log(data3);\n        }, 1000);\n    }, 1000);\n}, 1000);\n\n// ✅ Better with Promises\nfunction processDataPromise() {\n    return new Promise(resolve => {\n        setTimeout(() => {\n            resolve(\"Data\");\n        }, 1000);\n    });\n}\n\nprocessDataPromise()\n    .then(data1 => {\n        console.log(data1);\n        return processDataPromise();\n    })\n    .then(data2 => {\n        console.log(data2);\n        return processDataPromise();\n    })\n    .then(data3 => {\n        console.log(data3);\n    });",
+    "expectedOutput": "",
+    "explanation": "- Deeply nested callbacks are hard to read and maintain (callback hell)\n- Promises and async/await provide cleaner alternatives"
+  },
+  {
+    "id": "11.1",
+    "title": "Combining All Concepts",
+    "category": "MIXED COMPLEX QUESTIONS",
+    "type": "output",
+    "code": "var x = 10;\n\nfunction outer() {\n    var x = 20;\n    \n    function inner() {\n        var x = 30;\n        console.log(x);\n    }\n    \n    setTimeout(() => {\n        console.log(x);\n    }, 0);\n    \n    inner();\n}\n\nouter();\nconsole.log(x);",
+    "expectedOutput": "30\n10\n20",
+    "explanation": "- `inner()` logs `x` from its scope = 30\n- `setTimeout` callback logged first (but executes after), accesses outer's `x` = 20 (due to closure)\n- After `outer()` completes, global `x` = 10 is logged\n- Order: 30 (synchronous), then 10 (synchronous from global), then 20 (async from setTimeout)"
+  },
+  {
+    "id": "11.2",
+    "title": "Closure + setTimeout + Scope",
+    "category": "MIXED COMPLEX QUESTIONS",
+    "type": "output",
+    "code": "for (var i = 1; i <= 3; i++) {\n    setTimeout(function() {\n        console.log(\"i =\", i);\n    }, i * 1000);\n}",
+    "expectedOutput": "i = 4\ni = 4\ni = 4\n(printed at 1s, 2s, 3s respectively)",
+    "explanation": "- All callbacks close over the same `i`\n- Loop completes, `i` becomes 4\n- Callbacks execute but `i` is already 4\n- Even though delays are different, by execution time `i = 4` for all"
+  },
+  {
+    "id": "11.3",
+    "title": "Event Loop + Promises + setTimeout",
+    "category": "MIXED COMPLEX QUESTIONS",
+    "type": "output",
+    "code": "console.log(\"A\");\n\nPromise.resolve()\n    .then(() => {\n        console.log(\"B\");\n        setTimeout(() => {\n            console.log(\"C\");\n        }, 0);\n    })\n    .then(() => {\n        console.log(\"D\");\n    });\n\nsetTimeout(() => {\n    console.log(\"E\");\n}, 0);\n\nconsole.log(\"F\");",
+    "expectedOutput": "A\nF\nB\nD\nE\nC",
+    "explanation": "1. Synchronous: A, F\n2. Microtasks: Promise.then() → B, registers setTimeout for \"C\"\n3. Microtasks: Next .then() → D\n4. Macrotask: First setTimeout → E\n5. Macrotask: Second setTimeout (registered in Promise.then) → C"
+  },
+  {
+    "id": "11.4",
+    "title": "this + Closure + Arrow Function",
+    "category": "MIXED COMPLEX QUESTIONS",
+    "type": "output",
+    "code": "const obj = {\n    value: 42,\n    \n    regularMethod: function() {\n        console.log(this.value); // 42\n        \n        const inner = () => {\n            console.log(this.value); // 42\n        };\n        \n        setTimeout(inner, 100);\n    },\n    \n    arrowMethod: () => {\n        console.log(this.value); // undefined\n    }\n};\n\nobj.regularMethod();\nobj.arrowMethod();",
+    "expectedOutput": "42\n42\nundefined",
+    "explanation": "- `regularMethod`'s `this` = `obj` → logs 42\n- Arrow function in `regularMethod` inherits `this` from method → logs 42\n- `arrowMethod`'s `this` = global (arrow functions don't get own `this`) → undefined"
+  }
+];
