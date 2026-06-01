@@ -35,7 +35,7 @@
     "type": "output",
     "code": "var x = 10;\n(function() {\n    console.log(x);\n    var x = 20;\n})();",
     "expectedOutput": "undefined",
-    "explanation": "- Even though `var x = 20` is inside the IIFE, the variable declaration is hoisted to the top of the function\n- The outer `x = 10` is not accessible due to the inner `var x` declaration\n- When `console.log(x)` executes, `x` is declared but not yet initialized (TDZ concept)"
+    "explanation": "- Even though `var x = 20` is inside the IIFE, the variable declaration is hoisted to the top of the function\n- The inner `var x` shadows the outer `x = 10`, so the outer variable is not accessible inside the IIFE\n- When `console.log(x)` executes, the hoisted inner `var x` exists but has not been assigned yet — its value is `undefined`\n- **Note:** TDZ (Temporal Dead Zone) applies only to `let` and `const`, not `var`. With `var`, the variable is hoisted and initialized as `undefined`"
   },
   {
     "id": "2.1",
@@ -199,9 +199,9 @@
     "title": "this in Callbacks",
     "category": "THIS KEYWORD",
     "type": "output",
-    "code": "var length = 4;\n\nfunction callback() {\n    console.log(this.length);\n}\n\nconst object = {\n    length: 5,\n    method: function(callback) {\n        callback();\n    }\n};\n\nobject.method(callback);",
+    "code": "var value = 4;\n\nfunction callback() {\n    console.log(this.value);\n}\n\nconst object = {\n    value: 5,\n    method: function(callback) {\n        callback();\n    }\n};\n\nobject.method(callback);",
     "expectedOutput": "4",
-    "explanation": "- Even though `callback` is passed to an object's method, it's still called as a regular function\n- Regular function invocation means `this` refers to global object\n- `this.length` evaluates to `window.length` (which is 4, set by `var length = 4`)"
+    "explanation": "- Even though `callback` is passed to an object's method, it is still **invoked as a regular function** — not as `object.callback()`\n- Regular function invocation means `this` refers to the global object (`window` in browsers, `globalThis` in Node.js)\n- `this.value` reads the global `var value = 4`, not `object.value` (which is 5)\n- **Why not use `length`?** Many tutorials use `var length = 4`, but `window.length` is a special read-only property (the number of frames/iframes) and is **not** reliably set to 4 by a top-level `var`. That makes the output environment-dependent and misleading. Using a custom property like `value` demonstrates the same `this`-binding lesson reliably"
   },
   {
     "id": "7.1",
@@ -283,7 +283,7 @@
     "type": "output",
     "code": "console.log(x); // What is x here?\nconsole.log(add(2, 3)); // What happens?\n\nvar x = 5;\n\nfunction add(a, b) {\n    return a + b;\n}",
     "expectedOutput": "undefined\n5",
-    "explanation": "- JavaScript execution happens in 3 phases:\n  1. **Creation Phase**: Variables/functions hoisted, `this` bound, scope chain set\n  2. **Execution Phase**: Code executed line by line\n  3. **Deletion Phase**: Variables/functions garbage collected (for function execution contexts)"
+    "explanation": "- Each execution context has two standard phases:\n  1. **Creation Phase**: Variables/functions hoisted, `this` bound, scope chain set\n  2. **Execution Phase**: Code executed line by line\n- When a function finishes, its execution context is **popped off the call stack** — this is not a separate \"deletion phase.\" Memory is reclaimed later by garbage collection, which is unrelated to the execution context lifecycle"
   },
   {
     "id": "9.2",
@@ -355,7 +355,8 @@
     "type": "output",
     "code": "var x = 10;\n\nfunction outer() {\n    var x = 20;\n    \n    function inner() {\n        var x = 30;\n        console.log(x);\n    }\n    \n    setTimeout(() => {\n        console.log(x);\n    }, 0);\n    \n    inner();\n}\n\nouter();\nconsole.log(x);",
     "expectedOutput": "30\n10\n20",
-    "explanation": "- `inner()` logs `x` from its scope = 30\n- `setTimeout` callback logged first (but executes after), accesses outer's `x` = 20 (due to closure)\n- After `outer()` completes, global `x` = 10 is logged\n- Order: 30 (synchronous), then 10 (synchronous from global), then 20 (async from setTimeout)"
+    "explanation": "Execution order step by step:\n1. `outer()` is called → `inner()` runs **synchronously** → logs `30` (inner's local `x`)\n2. `setTimeout` callback is **registered** (not executed yet — it goes to the macrotask queue)\n3. `outer()` returns → control returns to global scope\n4. `console.log(x)` after `outer()` runs **synchronously** → logs `10` (global `x`)\n5. Call stack is empty → event loop picks up the setTimeout callback → logs `20` (outer's `x` via closure)\n\nFinal output order: `30`, then `10`, then `20`",
+    "keyConcepts": "- Synchronous code always completes before any async callback runs\n- The arrow function in `setTimeout` closes over outer's `x = 20`, not global `x = 10`\n- `inner()` has its own `x = 30` which shadows both outer and global `x`"
   },
   {
     "id": "11.2",
@@ -363,8 +364,8 @@
     "category": "MIXED COMPLEX QUESTIONS",
     "type": "output",
     "code": "for (var i = 1; i <= 3; i++) {\n    setTimeout(function() {\n        console.log(\"i =\", i);\n    }, i * 1000);\n}",
-    "expectedOutput": "i = 4\ni = 4\ni = 4\n(printed at 1s, 2s, 3s respectively)",
-    "explanation": "- All callbacks close over the same `i`\n- Loop completes, `i` becomes 4\n- Callbacks execute but `i` is already 4\n- Even though delays are different, by execution time `i = 4` for all"
+    "expectedOutput": "i = 4\ni = 4\ni = 4\n(each callback fires after 1s, 2s, and 3s — but all three log the same value)",
+    "explanation": "- All callbacks close over the **same** `var i` — there is only one binding\n- The loop finishes before any callback runs, so `i` is already `4` when they execute\n- The timers fire at different times (1s, 2s, 3s), but every callback reads the same final value of `i`, which is `4`\n- This is the classic closure-in-a-loop trap with `var`"
   },
   {
     "id": "11.3",

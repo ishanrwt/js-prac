@@ -107,8 +107,9 @@ undefined
 
 **Explanation:**
 - Even though `var x = 20` is inside the IIFE, the variable declaration is hoisted to the top of the function
-- The outer `x = 10` is not accessible due to the inner `var x` declaration
-- When `console.log(x)` executes, `x` is declared but not yet initialized (TDZ concept)
+- The inner `var x` shadows the outer `x = 10`, so the outer variable is not accessible inside the IIFE
+- When `console.log(x)` executes, the hoisted inner `var x` exists but has not been assigned yet — its value is `undefined`
+- **Note:** TDZ (Temporal Dead Zone) applies only to `let` and `const`, not `var`. With `var`, the variable is hoisted and initialized as `undefined`
 
 ---
 
@@ -648,14 +649,14 @@ Charlie is from NYC, USA
 
 ### Question 6.5: this in Callbacks
 ```javascript
-var length = 4;
+var value = 4;
 
 function callback() {
-    console.log(this.length);
+    console.log(this.value);
 }
 
 const object = {
-    length: 5,
+    value: 5,
     method: function(callback) {
         callback();
     }
@@ -670,9 +671,10 @@ object.method(callback);
 ```
 
 **Explanation:**
-- Even though `callback` is passed to an object's method, it's still called as a regular function
-- Regular function invocation means `this` refers to global object
-- `this.length` evaluates to `window.length` (which is 4, set by `var length = 4`)
+- Even though `callback` is passed to an object's method, it is still **invoked as a regular function** — not as `object.callback()`
+- Regular function invocation means `this` refers to the global object (`window` in browsers, `globalThis` in Node.js)
+- `this.value` reads the global `var value = 4`, not `object.value` (which is 5)
+- **Why not use `length`?** Many tutorials use `var length = 4`, but `window.length` is a special read-only property (the number of frames/iframes) and is **not** reliably set to 4 by a top-level `var`. That makes the output environment-dependent and misleading. Using a custom property like `value` demonstrates the same `this`-binding lesson reliably
 
 ---
 
@@ -953,10 +955,10 @@ undefined
 ```
 
 **Explanation:**
-- JavaScript execution happens in 3 phases:
+- Each execution context has two standard phases:
   1. **Creation Phase**: Variables/functions hoisted, `this` bound, scope chain set
   2. **Execution Phase**: Code executed line by line
-  3. **Deletion Phase**: Variables/functions garbage collected (for function execution contexts)
+- When a function finishes, its execution context is **popped off the call stack** — this is not a separate "deletion phase." Memory is reclaimed later by garbage collection, which is unrelated to the execution context lifecycle
 
 **Creation Phase for this code:**
 - `var x` declared and set to `undefined`
@@ -1242,31 +1244,19 @@ console.log(x);
 ```
 
 **Explanation:**
-- `inner()` logs `x` from its scope = 30
-- `setTimeout` callback logged first (but executes after), accesses outer's `x` = 20 (due to closure)
-- After `outer()` completes, global `x` = 10 is logged
-- Order: 30 (synchronous), then 10 (synchronous from global), then 20 (async from setTimeout)
+Execution order step by step:
+1. `outer()` is called → `inner()` runs **synchronously** → logs `30` (inner's local `x`)
+2. `setTimeout` callback is **registered** (not executed yet — it goes to the macrotask queue)
+3. `outer()` returns → control returns to global scope
+4. `console.log(x)` after `outer()` runs **synchronously** → logs `10` (global `x`)
+5. Call stack is empty → event loop picks up the setTimeout callback → logs `20` (outer's `x` via closure)
 
-**Wait, let me reconsider the order:**
-Actually, the output should be:
-```
-30
-20
-10
-```
+Final output order: `30`, then `10`, then `20`
 
-Because:
-1. Line 1: `inner()` executes synchronously, logs 30
-2. Line 2: `setTimeout` is registered but doesn't execute yet
-3. Line 3: Global `x` is logged from line after `outer()` call... wait, that executes AFTER `outer()` returns
-4. Actually the order is: Synchronous code in outer (30), then synchronous code after outer (10), THEN setTimeout (20)
-
-Actually:
-```
-30
-10
-20
-```
+**Key Concepts:**
+- Synchronous code always completes before any async callback runs
+- The arrow function in `setTimeout` closes over outer's `x = 20`, not global `x = 10`
+- `inner()` has its own `x = 30` which shadows both outer and global `x`
 
 ---
 
@@ -1284,14 +1274,14 @@ for (var i = 1; i <= 3; i++) {
 i = 4
 i = 4
 i = 4
-(printed at 1s, 2s, 3s respectively)
+(each callback fires after 1s, 2s, and 3s — but all three log the same value)
 ```
 
 **Explanation:**
-- All callbacks close over the same `i`
-- Loop completes, `i` becomes 4
-- Callbacks execute but `i` is already 4
-- Even though delays are different, by execution time `i = 4` for all
+- All callbacks close over the **same** `var i` — there is only one binding
+- The loop finishes before any callback runs, so `i` is already `4` when they execute
+- The timers fire at different times (1s, 2s, 3s), but every callback reads the same final value of `i`, which is `4`
+- This is the classic closure-in-a-loop trap with `var`
 
 **Fix:**
 ```javascript
