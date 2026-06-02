@@ -106,10 +106,19 @@ undefined
 ```
 
 **Explanation:**
-- Even though `var x = 20` is inside the IIFE, the variable declaration is hoisted to the top of the function
-- The inner `var x` shadows the outer `x = 10`, so the outer variable is not accessible inside the IIFE
-- When `console.log(x)` executes, the hoisted inner `var x` exists but has not been assigned yet — its value is `undefined`
-- **Note:** TDZ (Temporal Dead Zone) applies only to `let` and `const`, not `var`. With `var`, the variable is hoisted and initialized as `undefined`
+- `var x = 20` inside the IIFE is hoisted to the top of the IIFE's function scope and initialized as `undefined`
+- This inner `var x` **shadows** the outer `x = 10`, so the global variable is never accessed inside the IIFE
+- When `console.log(x)` runs, it reads the hoisted inner `x`, whose value is `undefined` at that point
+- This is equivalent to:
+
+```javascript
+var x = 10;
+(function() {
+    var x;           // hoisted, initialized as undefined
+    console.log(x);  // undefined
+    x = 20;
+})();
+```
 
 ---
 
